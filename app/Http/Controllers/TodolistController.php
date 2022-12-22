@@ -24,9 +24,6 @@ class TodolistController extends Controller
                 $contraint->aspectRatio();
             })->save($destPath . "/" . $name);
 
-            $destPath = public_path("/");
-
-            $image->move($destPath, $name);
             $item->image = $name;
 
             return true;
@@ -140,10 +137,6 @@ class TodolistController extends Controller
         $oldItem = clone $item;
 
         if ($request->name !== null) {
-            if ($request->name === $item->name) {
-                return response(['message' => 'New name cannot be the same as the previous!'], 400);
-            }
-
             $name = trim($request->string('name'));
 
             if ($name === "") {
