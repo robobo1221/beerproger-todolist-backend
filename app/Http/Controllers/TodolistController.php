@@ -106,6 +106,14 @@ class TodolistController extends Controller
             return response(['message' => 'Item does not exist!'], 400);
         }
 
+        if ($item->image) {
+            try {
+                unlink(public_path($this->imagePath) . "/" . $item->image);
+            } catch (Exception $e) {
+
+            }
+        }
+
         $item->delete();
 
         return response($item, 200);
@@ -116,6 +124,14 @@ class TodolistController extends Controller
 
         if ($item === null) {
             return response(['message' => 'Item does not exist!'], 400);
+        }
+
+        if ($item->image) {
+            try {
+                unlink(public_path($this->imagePath) . "/" . $item->image);
+            } catch (Exception $e) {
+
+            }
         }
 
         $item->delete();
