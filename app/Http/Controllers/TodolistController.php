@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Todolist;
+use Exception;
 use Intervention\Image\Facades\Image;
 
 use stdClass;
 
 class TodolistController extends Controller
 {
-    private string $imagePath = "images/items/";
+    private string $imagePath = "images/items";
 
     private function saveImage(Request $request, Todolist $item) {
         if ($request->hasFile('image')) {
@@ -27,29 +28,55 @@ class TodolistController extends Controller
 
             $image->move($destPath, $name);
             $item->image = $name;
+
+            return true;
         }
+
+        return false;
     }
 
-    public function getList() {
-        return response()->json(Todolist::all());
+    private function itemWithRealImagePath(Request $request, Todolist $item) {
+        if ($item->image !== null) {
+            $item->image = $request->getSchemeAndHttpHost() . "/" . $this->imagePath . "/" . $item->image;
+        }
+
+        return $item;
     }
 
-    public function getItemById(int $id) {
+    public function getList(Request $request) {
+        $list = Todolist::all();
+        $newList = array();
+
+        if ($list) {
+            foreach($list as $item) {
+                $item = $this->itemWithRealImagePath($request, $item);
+                array_push($newList, $item);
+            }
+        }
+
+        return response()->json($list);
+    }
+
+    public function getItemById(Request $request, int $id) {
         $item = Todolist::find($id);
 
         if ($item === null) {
             return response()->json(new stdClass);
         }
 
-        return response()->json($item);
+        $newItem = $this->itemWithRealImagePath($request, $item);
+
+        return response()->json($newItem);
     }
 
-    public function getItemByName(string $name) {
+    public function getItemByName(Request $request, string $name) {
         $item = Todolist::where('name', $name)->first();
 
         if ($item === null) {
             return response()->json(new stdClass);
         }
+
+        $item = $this->itemWithRealImagePath($request, $item);
 
         return response()->json($item);
     }
@@ -58,14 +85,18 @@ class TodolistController extends Controller
         $name = trim($request->string('name'));
 
         if ($name === "") {
-            return response('Error: Name Required!', 400);
+            return response(['message' => 'Name Required!'], 400);
         }
 
         $item = new Todolist;
         $item->name = $request->string('name');
         $item->details = $request->string('details');
 
-        $this->saveImage($request, $item);
+        try {
+            $this->saveImage($request, $item);
+        } catch (Exception $e) {
+            return [$e->getMessage()];
+        }
 
         $item->save();
         return response($item, 200);
@@ -75,7 +106,7 @@ class TodolistController extends Controller
         $item = Todolist::find($id);
 
         if ($item === null) {
-            return response('Error: Item does not exist!', 400);
+            return response(['message' => 'Item does not exist!'], 400);
         }
 
         $item->delete();
@@ -87,7 +118,7 @@ class TodolistController extends Controller
         $item = Todolist::where('name', $name)->first();
 
         if ($item === null) {
-            return response('Error: Item does not exist!', 400);
+            return response(['message' => 'Item does not exist!'], 400);
         }
 
         $item->delete();
@@ -97,26 +128,26 @@ class TodolistController extends Controller
 
     public function updateItem(Request $request) {
         if ($request->id === null) {
-            return response('Error: No id given!', 400);
+            return response(['message' => 'No id given!'], 400);
         }
 
         $item = Todolist::find($request->id);
 
         if ($item === null) {
-            return response('Error: Item does not exist!', 400);
+            return response(['message' => 'Item does not exist!'], 400);
         }
 
         $oldItem = clone $item;
 
         if ($request->name !== null) {
             if ($request->name === $item->name) {
-                return response('Error: New name cannot be the same as the previous!', 400);
+                return response(['message' => 'New name cannot be the same as the previous!'], 400);
             }
 
             $name = trim($request->string('name'));
 
             if ($name === "") {
-                return response('Error: Name Required!', 400);
+                return response(['message' => 'Name Required!'], 400);
             }
 
             $item->name = $name;
@@ -130,7 +161,11 @@ class TodolistController extends Controller
             $item->completed = $request->boolean('completed');
         }
 
-        $this->saveImage($request, $item);
+        try {
+            $this->saveImage($request, $item);
+        } catch (Exception $e) {
+            return [$e->getMessage()];
+        }
 
         $item->save();
 
