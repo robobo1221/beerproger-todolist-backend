@@ -19,6 +19,11 @@ class TodolistController extends Controller
             $name = time() . "." . $image->getClientOriginalExtension();
             $destPath = public_path($this->imagePath);
 
+            // Make sure there is a path!
+            if (!file_exists($destPath)) {
+                mkdir($destPath, 0777, true);
+            }
+
             $img = Image::make($image->getRealPath());
             $img->resize(100, 100, function($contraint) {
                 $contraint->aspectRatio();
