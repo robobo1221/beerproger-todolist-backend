@@ -2,9 +2,9 @@
 
 <ol>
     <li>Make sure you have installed and enabled the PHP GD extension. This is for image processing!</li>
-    <li>```php composer install```</li>
+    <li><i>php composer install</i></li>
     <li>set .env file correctly</li>
-    <li>```php artisan migrate```</li>
-    <li>```php artisan serve```</li>
+    <li><i>php artisan migrate</i></li>
+    <li><i>php artisan serve</i></li>
 </ol>
 
